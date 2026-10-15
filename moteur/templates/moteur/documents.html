@@ -1,0 +1,58 @@
+{% extends "moteur/base.html" %}
+{% block title %}Corpus{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div class="eyebrow"><span class="eyebrow-dot"></span> Étape 1 · Votre bibliothèque</div>
+  <h1>Construisez votre corpus</h1>
+  <p>Importez les documents qui serviront de base à la recherche sémantique.</p>
+</section>
+
+<section class="card panel">
+  <div class="panel-title">
+    <div><h2>Ajouter des documents</h2><p>Formats acceptés : TXT, Markdown et CSV avec les colonnes <code>title,text</code>.</p></div>
+    <span class="status status-neutral">{{ docs|length }} / 50 documents</span>
+  </div>
+  <progress value="{{ docs|length }}" max="50" aria-label="{{ docs|length }} documents sur 50"></progress>
+  <form method="post" enctype="multipart/form-data" class="upload-form">
+    {% csrf_token %}
+    <label for="corpus-files">Fichiers à importer</label>
+    <input id="corpus-files" type="file" name="files" multiple accept=".txt,.md,.csv" required>
+    <div><button type="submit">Importer les documents</button></div>
+  </form>
+</section>
+
+<section class="card panel section-gap">
+  <div class="panel-title">
+    <div><h2>Documents du corpus</h2><p>Consultez les contenus importés et leur état d’indexation.</p></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Titre</th><th>Extrait</th><th>État</th><th><span class="sr-only">Actions</span></th></tr></thead>
+      <tbody>
+        {% for d in docs %}
+        <tr>
+          <td>{{ d.id }}</td>
+          <td><strong>{{ d.title }}</strong></td>
+          <td>{{ d.text|truncatechars:120 }}</td>
+          <td>{% if d.embedding %}<span class="status status-ok">Indexé</span>{% else %}<span class="status status-neutral">À indexer</span>{% endif %}</td>
+          <td>
+            <form method="post" action="{% url 'delete_document' d.id %}" onsubmit="return confirm('Supprimer ce document du corpus ?');">
+              {% csrf_token %}
+              <button type="submit" class="secondary outline button-small" aria-label="Supprimer {{ d.title }}">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">＋</span>
+            <h3>Votre corpus est vide</h3>
+            <p>Importez vos premiers fichiers pour commencer.</p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

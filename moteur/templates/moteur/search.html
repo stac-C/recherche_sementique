@@ -1,0 +1,54 @@
+{% extends "moteur/base.html" %}
+{% block title %}Recherche{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div class="eyebrow"><span class="eyebrow-dot"></span> Étape 3 · Exploration</div>
+  <h1>Recherchez par le sens</h1>
+  <p>Décrivez ce que vous cherchez en langage naturel. Le moteur identifie les passages les plus pertinents.</p>
+</section>
+
+<section class="card panel">
+  <form method="get" role="search">
+    <label for="search-query">Votre recherche</label>
+    <div class="grid">
+      <input id="search-query" type="search" name="q" value="{{ q }}" placeholder="Ex. Quels documents parlent de la protection des données ?" autofocus>
+      <div>
+        <label for="result-count">Nombre de résultats</label>
+        <select id="result-count" name="k">
+          <option value="3" {% if k == 3 %}selected{% endif %}>3 résultats</option>
+          <option value="5" {% if k == 5 %}selected{% endif %}>5 résultats</option>
+          <option value="10" {% if k == 10 %}selected{% endif %}>10 résultats</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit">Lancer la recherche</button>
+  </form>
+</section>
+
+{% if error %}
+<p class="alert error section-gap" role="alert">{{ error }}</p>
+{% elif q %}
+<section class="section-gap">
+  <div class="panel-title">
+    <div><h2>Résultats</h2><p>Meilleures correspondances pour « {{ q }} »</p></div>
+    <span class="status status-neutral">{{ results|length }} résultat(s)</span>
+  </div>
+  {% for doc, score in results %}
+  <article class="result-card">
+    <header>
+      <strong><span class="step-number">{{ forloop.counter }}</span> {{ doc.title }}</strong>
+      <span>Similarité <span class="score">{{ score|floatformat:3 }}</span></span>
+    </header>
+    <progress value="{{ score|floatformat:3 }}" max="1" aria-label="Similarité {{ score|floatformat:3 }}"></progress>
+    <p>{{ doc.text|truncatechars:500 }}</p>
+  </article>
+  {% endfor %}
+</section>
+{% else %}
+<section class="card empty-state section-gap">
+  <span class="empty-icon" aria-hidden="true">⌕</span>
+  <h3>Prêt à explorer votre corpus ?</h3>
+  <p>Saisissez une question ci-dessus pour découvrir les documents les plus proches de votre besoin.</p>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>{% block title %}Recherche sémantique{% endblock %} · Sémantique</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    :root {
+      --primary: #5b5ce2;
+      --primary-hover: #4849c7;
+      --primary-focus: rgba(91, 92, 226, .2);
+      --ink: #20243a;
+      --muted: #747b91;
+      --line: #e8eaf2;
+      --surface: #fff;
+      --canvas: #f5f7fb;
+      --success: #168566;
+      --danger: #c64c61;
+      --radius: 18px;
+      --box-shadow: 0 12px 36px rgba(35, 43, 78, .055);
+    }
+    html { background: var(--canvas); scroll-behavior: smooth; }
+    body { color: var(--ink); background: var(--canvas); font-size: 15px; }
+    a { text-decoration: none; }
+    .app-header { position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.94); backdrop-filter: blur(16px); }
+    .app-nav { max-width: 1180px; margin: 0 auto; padding: 0 1.25rem; min-height: 72px; }
+    .brand { display: inline-flex; align-items: center; gap: .75rem; color: var(--ink); font-size: 1rem; letter-spacing: -.03em; }
+    .brand-mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; color: #fff; background: linear-gradient(145deg, #7778f4, #5051d5); font-size: 1.1rem; font-weight: 800; box-shadow: 0 5px 12px rgba(91,92,226,.22); }
+    .brand small { display: block; margin-top: 1px; color: var(--muted); font-size: .7rem; font-weight: 500; letter-spacing: .02em; }
+    .nav-links { gap: .35rem; }
+    .nav-links a { display: inline-flex; align-items: center; gap: .5rem; padding: .55rem .75rem; border-radius: 10px; color: #687087; font-size: .84rem; font-weight: 600; transition: color .18s, background .18s; }
+    .nav-links a:hover, .nav-links a[aria-current="page"] { color: var(--primary); background: #f0f0ff; }
+    .nav-step { color: #969bb0; font-size: .72rem; }
+    main.container { max-width: 1180px; min-height: calc(100vh - 140px); padding: 2.5rem 1.25rem 4rem; }
+    .page-heading { margin-bottom: 1.7rem; }
+    .eyebrow { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; color: var(--primary); font-size: .72rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    h1, h2, h3, h4 { color: var(--ink); letter-spacing: -.035em; }
+    .page-heading h1 { margin-bottom: .45rem; font-size: clamp(1.75rem, 3vw, 2.25rem); }
+    .page-heading p { max-width: 660px; margin: 0; color: var(--muted); }
+    .card, article { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--box-shadow); }
+    article { padding: 1.25rem; }
+    article > header { margin: -1.25rem -1.25rem 1.1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); border-radius: var(--radius) var(--radius) 0 0; background: #fcfcfe; }
+    .panel { padding: clamp(1.15rem, 3vw, 1.8rem); }
+    .panel + .panel, .section-gap { margin-top: 1.25rem; }
+    .panel-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.15rem; }
+    .panel-title h2, .panel-title h3 { margin: 0; font-size: 1.12rem; }
+    .panel-title p { margin: .3rem 0 0; color: var(--muted); font-size: .88rem; }
+    .muted, small { color: var(--muted); }
+    label { color: #41475c; font-size: .86rem; font-weight: 650; }
+    input:not([type=checkbox]):not([type=file]), select, textarea { min-height: 47px; border: 1px solid #dfe2ed; border-radius: 11px; background: #fff; box-shadow: none; }
+    input:focus, select:focus, textarea:focus { border-color: #9697f3; box-shadow: 0 0 0 3px rgba(91,92,226,.11); }
+    input[type=file] { padding: .8rem; border: 1px dashed #cfd2e2; border-radius: 12px; background: #fafbff; }
+    button, [role=button] { min-height: 43px; border-radius: 11px; font-weight: 650; }
+    button:not(.outline), [role=button]:not(.outline) { box-shadow: 0 5px 12px rgba(91,92,226,.13); }
+    button:disabled { opacity: .55; }
+    .button-small { min-height: 34px; padding: .35rem .65rem; font-size: .8rem; }
+    .status { display: inline-flex; align-items: center; gap: .45rem; padding: .38rem .68rem; border: 1px solid transparent; border-radius: 999px; font-size: .77rem; font-weight: 700; white-space: nowrap; }
+    .status::before { width: 7px; height: 7px; border-radius: 50%; background: currentColor; content: ""; }
+    .status-ok { color: var(--success); border-color: #d4eee5; background: #effaf6; }
+    .status-error { color: var(--danger); border-color: #f3dce1; background: #fff4f5; }
+    .status-neutral { color: #697187; border-color: #e5e7ef; background: #f7f8fb; }
+    .ok { color: var(--success); }
+    .ko { color: var(--danger); }
+    .alert { margin: 0 0 .7rem; padding: .9rem 1rem; border: 1px solid #d7eee5; border-radius: 12px; color: #176d55; background: #f0faf6; }
+    .alert.error { border-color: #f2dce1; color: #a13c50; background: #fff5f6; }
+    progress { height: 8px; overflow: hidden; border-radius: 999px; accent-color: var(--primary); }
+    progress::-webkit-progress-bar { border-radius: 999px; background: #eceefa; }
+    progress::-webkit-progress-value { border-radius: 999px; background: linear-gradient(90deg, #7778f4, #5354d8); }
+    table { margin: 0; font-size: .88rem; }
+    thead th { padding: .8rem .75rem; color: #858ba0; background: #fafbfe; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+    tbody td { padding: .85rem .75rem; border-bottom: 1px solid #eff0f5; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .table-wrap { overflow-x: auto; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .grid { gap: 1rem; }
+    .metric { padding: 1.2rem; }
+    .metric-label { margin: 0 0 .6rem; color: var(--muted); font-size: .8rem; font-weight: 650; }
+    .metric-value { margin: 0; font-size: 1.8rem; }
+    .empty-state { padding: 2.3rem 1.5rem; text-align: center; }
+    .empty-state .empty-icon { display: grid; width: 48px; height: 48px; margin: 0 auto .9rem; place-items: center; border-radius: 15px; color: var(--primary); background: #f0f0ff; font-size: 1.25rem; }
+    .empty-state h3 { margin-bottom: .35rem; font-size: 1rem; }
+    .empty-state p { margin: 0; color: var(--muted); font-size: .88rem; }
+    .score { color: var(--primary); font-weight: 750; font-variant-numeric: tabular-nums; }
+    .result-card { margin-top: 1rem; }
+    .result-card header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+    .result-card p { margin-bottom: .4rem; color: #596076; line-height: 1.7; }
+    .step-number { display: inline-grid; width: 28px; height: 28px; place-items: center; border-radius: 9px; color: var(--primary); background: #efefff; font-size: .8rem; font-weight: 750; }
+    .upload-form { display: grid; gap: .8rem; }
+    .inline-form { display: flex; align-items: center; gap: .65rem; }
+    .inline-form button { margin: 0; }
+    .question-form { align-items: end; }
+    .question-form input, .question-form select { margin-bottom: 0; }
+    .app-footer { padding: 1.2rem; border-top: 1px solid var(--line); color: #9398a9; font-size: .77rem; text-align: center; }
+    @media (max-width: 760px) {
+      .app-nav { align-items: flex-start; flex-direction: column; gap: .55rem; padding-top: .8rem; padding-bottom: .55rem; }
+      .nav-links { width: 100%; justify-content: flex-start; gap: .2rem; overflow-x: auto; }
+      .nav-links a { padding: .5rem .58rem; font-size: .77rem; white-space: nowrap; }
+      .nav-step { display: none; }
+      main.container { padding-top: 1.7rem; }
+      .question-form { display: flex; flex-direction: column; align-items: stretch; }
+      .question-form button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<header class="app-header">
+  <nav class="app-nav" aria-label="Navigation principale">
+    <ul>
+      <li>
+        <a class="brand" href="{% url 'documents' %}" aria-label="Sémantique, accueil">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span><strong>Sémantique</strong><small>Studio de recherche documentaire</small></span>
+        </a>
+      </li>
+    </ul>
+    <ul class="nav-links">
+      <li><a href="{% url 'documents' %}" {% if request.resolver_match.url_name == 'documents' or request.resolver_match.url_name == 'delete_document' %}aria-current="page"{% endif %}><span class="nav-step">01</span> Corpus</a></li>
+      <li><a href="{% url 'build' %}" {% if request.resolver_match.url_name == 'build' %}aria-current="page"{% endif %}><span class="nav-step">02</span> Index</a></li>
+      <li><a href="{% url 'search' %}" {% if request.resolver_match.url_name == 'search' %}aria-current="page"{% endif %}><span class="nav-step">03</span> Recherche</a></li>
+      <li><a href="{% url 'evaluation' %}" {% if request.resolver_match.url_name == 'evaluation' or request.resolver_match.url_name == 'delete_question' %}aria-current="page"{% endif %}><span class="nav-step">04</span> Évaluation</a></li>
+    </ul>
+  </nav>
+</header>
+<main class="container">
+  {% for m in messages %}<p class="alert{% if m.tags == 'error' %} error{% endif %}" role="status">{{ m }}</p>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="app-footer">Sémantique · Recherche documentaire intelligente</footer>
+</body>
+</html>

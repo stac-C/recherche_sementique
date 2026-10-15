@@ -1,0 +1,42 @@
+{% extends "moteur/base.html" %}
+{% block title %}Index{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div class="eyebrow"><span class="eyebrow-dot"></span> Étape 2 · Préparation</div>
+  <h1>Préparez votre index</h1>
+  <p>Transformez le corpus en représentations vectorielles pour retrouver les documents par leur sens.</p>
+</section>
+
+<section class="card panel">
+  <div class="panel-title">
+    <div><h2>État du moteur</h2><p>Vérifiez la connexion avant de générer vos embeddings.</p></div>
+    {% if ollama %}<span class="status status-ok">Service disponible</span>{% else %}<span class="status status-error">Service indisponible</span>{% endif %}
+  </div>
+  <div class="grid">
+    <article>
+      <header><strong>Connexion Ollama</strong></header>
+      <p>{% if ollama %}Le serveur répond et peut traiter vos documents.{% else %}Le serveur ne répond pas. Démarrez Ollama avec <code>ollama serve</code>.{% endif %}</p>
+      <small>URL du serveur</small><br><code>{{ url }}</code>
+    </article>
+    <article>
+      <header><strong>Modèle d’embedding</strong></header>
+      <p><code>{{ model }}</code></p>
+      <small>Configuré dans <code>settings.py</code></small>
+    </article>
+  </div>
+
+  <div class="section-gap">
+    <div class="panel-title">
+      <div><h3>Progression de l’index</h3><p>{{ indexed }} document(s) indexé(s) sur {{ total }}</p></div>
+      <strong>{{ indexed }} / {{ total }}</strong>
+    </div>
+    <progress value="{{ indexed }}" max="{{ total|default:1 }}" aria-label="{{ indexed }} document(s) indexé(s) sur {{ total }}"></progress>
+  </div>
+
+  <form method="post" class="section-gap">
+    {% csrf_token %}
+    <button type="submit" {% if not total or not ollama %}disabled{% endif %}>Générer ou actualiser l’index</button>
+    {% if not total %}<small class="muted">Importez d’abord au moins un document dans votre corpus.</small>{% elif not ollama %}<small class="muted">Le serveur Ollama doit être disponible pour continuer.</small>{% endif %}
+  </form>
+</section>
+{% endblock %}

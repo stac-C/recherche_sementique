@@ -1,0 +1,85 @@
+{% extends "moteur/base.html" %}
+{% block title %}Évaluation{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div class="eyebrow"><span class="eyebrow-dot"></span> Étape 4 · Qualité</div>
+  <h1>Mesurez la pertinence</h1>
+  <p>Créez un jeu de questions avec leurs documents attendus, puis évaluez la qualité des résultats.</p>
+</section>
+
+<section class="card panel">
+  <div class="panel-title">
+    <div><h2>Jeu de test</h2><p>Associez une question au document qui devrait apparaître dans les résultats.</p></div>
+    <span class="status status-neutral">{{ questions|length }} question(s)</span>
+  </div>
+  <form method="post" class="grid question-form">
+    {% csrf_token %}
+    <div><label for="test-question">Question de test</label><input id="test-question" name="question" placeholder="Ex. Comment fonctionne la recherche sémantique ?" required></div>
+    <div>
+      <label for="expected-document">Document attendu</label>
+      <select id="expected-document" name="expected" required>
+        <option value="">Choisir un document…</option>
+        {% for d in docs %}<option value="{{ d.id }}">{{ d.id }} · {{ d.title }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit" {% if not docs %}disabled{% endif %}>Ajouter la question</button>
+  </form>
+  {% if not docs %}<small class="muted">Importez des documents dans le corpus avant de créer votre jeu de test.</small>{% endif %}
+</section>
+
+<section class="card panel section-gap">
+  <div class="panel-title">
+    <div><h2>Questions enregistrées</h2><p>Un jeu de 25 à 30 questions est recommandé pour une évaluation utile.</p></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Question</th><th>Document attendu</th><th><span class="sr-only">Actions</span></th></tr></thead>
+      <tbody>
+        {% for q in questions %}
+        <tr>
+          <td>{{ q.question }}</td>
+          <td><strong>{{ q.expected.title }}</strong></td>
+          <td><form method="post" action="{% url 'delete_question' q.id %}" onsubmit="return confirm('Supprimer cette question du jeu de test ?');">{% csrf_token %}<button type="submit" class="secondary outline button-small" aria-label="Supprimer la question {{ q.question }}">Supprimer</button></form></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3"><div class="empty-state"><span class="empty-icon" aria-hidden="true">?</span><h3>Aucune question pour le moment</h3><p>Ajoutez des questions pour pouvoir lancer l’évaluation.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" class="section-gap">
+    {% csrf_token %}
+    <button type="submit" name="run" value="1" {% if not questions %}disabled{% endif %}>Lancer l’évaluation</button>
+  </form>
+</section>
+
+{% if metrics %}
+<section class="section-gap">
+  <div class="panel-title">
+    <div><h2>Résultats de l’évaluation</h2><p>Indicateurs calculés sur {{ metrics.n }} question(s).</p></div>
+    <a href="{% url 'export' %}" role="button" class="secondary outline button-small">Exporter en CSV</a>
+  </div>
+  <div class="grid">
+    <article class="metric"><p class="metric-label">Hit@1 · Bon résultat en première position</p><h3 class="metric-value">{% widthratio metrics.hit1 1 100 %}<small>%</small></h3></article>
+    <article class="metric"><p class="metric-label">Hit@3 · Bon résultat dans les trois premiers</p><h3 class="metric-value">{% widthratio metrics.hit3 1 100 %}<small>%</small></h3></article>
+    <article class="metric"><p class="metric-label">MRR · Rang réciproque moyen</p><h3 class="metric-value">{{ metrics.mrr|floatformat:3 }}</h3></article>
+  </div>
+
+  <section class="card panel section-gap">
+    <div class="panel-title"><div><h2>Analyse des erreurs</h2><p>{{ errors|length }} question(s) où le document attendu n’est pas en première position.</p></div></div>
+    {% for r in errors %}
+    <article class="result-card">
+      <header><strong>{{ r.question }}</strong><span class="status status-error">{{ r.diag }}</span></header>
+      <p>Rang du document attendu : <strong>{{ r.rank }}</strong> · Score attendu : {{ r.s_exp }} · Score du premier résultat : {{ r.s_top }}</p>
+      <div class="grid">
+        <div><strong>Document attendu · {{ r.expected.title }}</strong><p>{{ r.expected.text|truncatechars:350 }}</p></div>
+        <div><strong>Premier résultat · {{ r.top1.title }}</strong><p>{{ r.top1.text|truncatechars:350 }}</p></div>
+      </div>
+    </article>
+    {% empty %}
+    <div class="empty-state"><span class="empty-icon" aria-hidden="true">✓</span><h3>Aucune erreur de classement</h3><p>Les documents attendus arrivent tous en première position. Vous pouvez enrichir le jeu de test pour confirmer ces résultats.</p></div>
+    {% endfor %}
+  </section>
+</section>
+{% endif %}
+{% endblock %}
