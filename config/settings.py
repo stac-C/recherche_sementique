@@ -24,12 +24,16 @@ import os
 SECRET_KEY = 'django-insecure-b*&$tv&u$5@$w!7yd=7$iiheu5vyxkd*v*$mu)ap)qh&h1(&rq'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']   # nécessaire pour les formulaires POST en HTTPS
+DEBUG = os.environ.get('DEBUG', '0') == '1'       # désactive la page de debug en production
 
 OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost:11434').rstrip('/')
-OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '1d84c8b2dc0f441492b3231881f4755b.VikkasLHSRET7a_Otve7UnSp')
+# OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '1d84c8b2dc0f441492b3231881f4755b.VikkasLHSRET7a_Otve7UnSp')
+OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '')
+# https://ollama.com/api
 OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '300'))
 OLLAMA_HEALTH_TIMEOUT = int(os.environ.get('OLLAMA_HEALTH_TIMEOUT', '5'))
 EMBED_MODEL = os.environ.get('EMBED_MODEL', 'bge-m3')
@@ -79,12 +83,17 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+import dj_database_url
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    'default': dj_database_url.config(default='sqlite:///db.sqlite3', conn_max_age=600)
     }
-}
 
 
 # Password validation
