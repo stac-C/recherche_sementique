@@ -90,10 +90,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #     }
 # }
 
+
 import dj_database_url
+
 DATABASES = {
-    'default': dj_database_url.config(default='sqlite:///db.sqlite3', conn_max_age=600)
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///db.sqlite3",       # SQLite en local si DATABASE_URL absente
+        conn_max_age=0,                       # pas de connexion persistante en serverless
+        ssl_require=bool(os.environ.get("DATABASE_URL")),
+    )
+}
+if os.environ.get("DATABASE_URL"):
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True   # requis par le Transaction pooler
 
 
 # Password validation
