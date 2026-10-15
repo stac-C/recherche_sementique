@@ -13,7 +13,7 @@ from .models import Document, EvalQuestion
 
 
 def documents(request):
-    """Étape 1 : importer le corpus."""
+    """Étape 1  fg: importer le corpus."""
     if request.method == "POST":
         n = 0
         for f in request.FILES.getlist("files"):
