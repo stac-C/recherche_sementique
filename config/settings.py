@@ -25,7 +25,7 @@ import dj_database_url
 SECRET_KEY = 'django-insecure-b*&$tv&u$5@$w!7yd=7$iiheu5vyxkd*v*$mu)ap)qh&h1(&rq'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "recherche-sementique.vercel.app",
