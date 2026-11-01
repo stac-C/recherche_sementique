@@ -1,10 +1,5 @@
 django>=5.0
 dj-database-url
 whitenoise
-python-dotenv
-
 numpy
 requests
-tzdata
-sqlparse
-urllib3
