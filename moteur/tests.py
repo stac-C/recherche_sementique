@@ -80,6 +80,28 @@ class PipelineTest(TestCase):
         self.a = Document.objects.create(title="Gradient", text="descente de gradient optimisation réseau neurones")
         self.b = Document.objects.create(title="SQL", text="jointure requête base de données relationnelle")
 
+    def test_bulk_delete_removes_only_selected_documents_and_their_questions(self):
+        question_a = EvalQuestion.objects.create(question="Question gradient", expected=self.a)
+        question_b = EvalQuestion.objects.create(question="Question SQL", expected=self.b)
+
+        response = self.client.post(
+            reverse("documents"),
+            {"delete_selected": "1", "selected_documents": [str(self.a.pk)]},
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse("documents"))
+        self.assertQuerySetEqual(Document.objects.all(), [self.b], transform=lambda doc: doc)
+        self.assertQuerySetEqual(EvalQuestion.objects.all(), [question_b], transform=lambda question: question)
+        self.assertContains(response, "1 document(s) supprimé(s) et 1 question(s)")
+        self.assertFalse(EvalQuestion.objects.filter(pk=question_a.pk).exists())
+
+    def test_bulk_delete_without_selection_keeps_corpus_unchanged(self):
+        response = self.client.post(reverse("documents"), {"delete_selected": "1"}, follow=True)
+
+        self.assertEqual(Document.objects.count(), 2)
+        self.assertContains(response, "Sélectionnez au moins un document à supprimer.")
+
     def test_pipeline(self):
         self.client.post(reverse("build"))
         self.assertEqual(Document.objects.exclude(embedding=None).count(), 2)

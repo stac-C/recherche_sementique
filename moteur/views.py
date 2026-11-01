@@ -13,8 +13,25 @@ from .models import Document, EvalQuestion
 
 
 def documents(request):
-    """Étape 1  fg: importer le corpus."""
+    """Étape 1 : importer et gérer le corpus."""
     if request.method == "POST":
+        if "delete_selected" in request.POST:
+            selected_ids = request.POST.getlist("selected_documents")
+            if not selected_ids:
+                messages.warning(request, "Sélectionnez au moins un document à supprimer.")
+                return redirect("documents")
+
+            selected = Document.objects.filter(pk__in=selected_ids)
+            count = selected.count()
+            question_count = EvalQuestion.objects.filter(expected__in=selected).count()
+            selected.delete()
+            messages.success(
+                request,
+                f"{count} document(s) supprimé(s) et {question_count} question(s) "
+                "de test associée(s).",
+            )
+            return redirect("documents")
+
         n = 0
         for f in request.FILES.getlist("files"):
             raw = f.read().decode("utf-8-sig", "ignore")
@@ -57,6 +74,8 @@ def search(request):
     """Étape 3 : recherche sémantique."""
     q = request.GET.get("q", "").strip()
     k = int(request.GET.get("k", 5))
+    total = Document.objects.count()
+    indexed = Document.objects.exclude(embedding=None).count()
     results, error = [], None
     if q:
         try:
@@ -65,7 +84,10 @@ def search(request):
                 error = "Aucun document indexé."
         except Exception as e:
             error = str(e)
-    return render(request, "moteur/search.html", {"q": q, "k": k, "results": results, "error": error})
+    return render(request, "moteur/search.html", {
+        "q": q, "k": k, "results": results, "error": error,
+        "total": total, "indexed": indexed,
+    })
 
 
 def evaluation(request):
@@ -75,7 +97,17 @@ def evaluation(request):
         if q and request.POST.get("expected"):
             EvalQuestion.objects.create(question=q, expected_id=request.POST["expected"])
         return redirect("evaluation")
-    ctx = {"docs": Document.objects.all(), "questions": EvalQuestion.objects.select_related("expected")}
+    docs = Document.objects.all()
+    total = docs.count()
+    indexed = docs.exclude(embedding=None).count()
+    questions = EvalQuestion.objects.select_related("expected")
+    ctx = {
+        "docs": docs,
+        "questions": questions,
+        "total": total,
+        "indexed": indexed,
+        "can_evaluate": bool(total and indexed == total and questions.exists()),
+    }
     if request.method == "POST" and "run" in request.POST:
         try:
             rows, metrics = services.evaluate()

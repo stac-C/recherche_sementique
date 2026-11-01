@@ -4,80 +4,125 @@
 <section class="page-heading">
   <div class="eyebrow"><span class="eyebrow-dot"></span> Étape 4 · Qualité</div>
   <h1>Mesurez la pertinence</h1>
-  <p>Créez un jeu de questions avec leurs documents attendus, puis évaluez la qualité des résultats.</p>
+  <p>Vérifiez si le moteur retrouve le bon document pour les questions que vos lecteurs poseraient réellement.</p>
+</section>
+
+<section class="card panel evaluation-guide" aria-label="Étapes de l’évaluation">
+  <strong>Comment ça marche ?</strong>
+  <ol>
+    <li>Écrivez une question représentative.</li>
+    <li>Choisissez le document qui devrait répondre à cette question.</li>
+    <li>Lancez l’évaluation pour mesurer le classement des résultats.</li>
+  </ol>
 </section>
 
 <section class="card panel">
   <div class="panel-title">
-    <div><h2>Jeu de test</h2><p>Associez une question au document qui devrait apparaître dans les résultats.</p></div>
+    <div><h2>1. Constituez votre jeu de test</h2><p>Une question claire et un document de référence suffisent pour commencer.</p></div>
     <span class="status status-neutral">{{ questions|length }} question(s)</span>
   </div>
   <form method="post" class="grid question-form">
     {% csrf_token %}
-    <div><label for="test-question">Question de test</label><input id="test-question" name="question" placeholder="Ex. Comment fonctionne la recherche sémantique ?" required></div>
+    <div><label for="test-question">Question de test</label><textarea id="test-question" name="question" rows="2" maxlength="500" placeholder="Ex. Comment fonctionne la recherche sémantique ?" required></textarea></div>
     <div>
       <label for="expected-document">Document attendu</label>
       <select id="expected-document" name="expected" required>
         <option value="">Choisir un document…</option>
-        {% for d in docs %}<option value="{{ d.id }}">{{ d.id }} · {{ d.title }}</option>{% endfor %}
+        {% for d in docs %}<option value="{{ d.id }}">{{ d.title }}</option>{% endfor %}
       </select>
     </div>
     <button type="submit" {% if not docs %}disabled{% endif %}>Ajouter la question</button>
   </form>
-  {% if not docs %}<small class="muted">Importez des documents dans le corpus avant de créer votre jeu de test.</small>{% endif %}
+  {% if not docs %}<small class="muted">Importez d’abord des documents dans le <a href="{% url 'documents' %}">corpus</a>.</small>{% endif %}
 </section>
 
 <section class="card panel section-gap">
   <div class="panel-title">
-    <div><h2>Questions enregistrées</h2><p>Un jeu de 25 à 30 questions est recommandé pour une évaluation utile.</p></div>
+    <div><h2>2. Vérifiez vos questions</h2><p>Plusieurs questions couvrant différents documents rendent les résultats plus représentatifs.</p></div>
+    <span class="status {% if questions %}status-neutral{% else %}status-error{% endif %}">{{ questions|length }} prête(s)</span>
   </div>
   <div class="table-wrap">
-    <table>
+    <table class="evaluation-question-table">
       <thead><tr><th>Question</th><th>Document attendu</th><th><span class="sr-only">Actions</span></th></tr></thead>
       <tbody>
         {% for q in questions %}
         <tr>
-          <td>{{ q.question }}</td>
-          <td><strong>{{ q.expected.title }}</strong></td>
-          <td><form method="post" action="{% url 'delete_question' q.id %}" onsubmit="return confirm('Supprimer cette question du jeu de test ?');">{% csrf_token %}<button type="submit" class="secondary outline button-small" aria-label="Supprimer la question {{ q.question }}">Supprimer</button></form></td>
+          <td data-label="Question">{{ q.question }}</td>
+          <td data-label="Document attendu"><strong>{{ q.expected.title }}</strong></td>
+          <td data-label="Action"><form method="post" action="{% url 'delete_question' q.id %}" onsubmit="return confirm('Supprimer cette question du jeu de test ?');">{% csrf_token %}<button type="submit" class="secondary outline button-small" aria-label="Supprimer la question {{ q.question }}">Supprimer</button></form></td>
         </tr>
         {% empty %}
-        <tr><td colspan="3"><div class="empty-state"><span class="empty-icon" aria-hidden="true">?</span><h3>Aucune question pour le moment</h3><p>Ajoutez des questions pour pouvoir lancer l’évaluation.</p></div></td></tr>
+        <tr class="empty-row"><td colspan="3"><div class="empty-state"><span class="empty-icon" aria-hidden="true">?</span><h3>Aucune question pour le moment</h3><p>Ajoutez des questions pour pouvoir lancer l’évaluation.</p></div></td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <form method="post" class="section-gap">
-    {% csrf_token %}
-    <button type="submit" name="run" value="1" {% if not questions %}disabled{% endif %}>Lancer l’évaluation</button>
-  </form>
+  <div class="evaluation-action section-gap">
+    <div>
+      <h3>3. Lancez l’évaluation</h3>
+      {% if not total %}
+      <p>Ajoutez des documents au <a href="{% url 'documents' %}">corpus</a> pour continuer.</p>
+      {% elif indexed < total %}
+      <p>{{ indexed }} document(s) indexé(s) sur {{ total }}. Générez l’index avant de lancer le test.</p>
+      {% elif not questions %}
+      <p>Ajoutez au moins une question pour pouvoir mesurer les résultats.</p>
+      {% else %}
+      <p>Le test compare le document attendu aux résultats les mieux classés.</p>
+      {% endif %}
+    </div>
+    {% if not total %}
+    <a href="{% url 'documents' %}" role="button" class="secondary outline">Ajouter des documents</a>
+    {% elif indexed < total %}
+    <a href="{% url 'build' %}" role="button" class="secondary outline">Préparer l’index</a>
+    {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" name="run" value="1" {% if not can_evaluate %}disabled{% endif %}>Lancer l’évaluation</button>
+    </form>
+    {% endif %}
+  </div>
 </section>
 
 {% if metrics %}
 <section class="section-gap">
   <div class="panel-title">
-    <div><h2>Résultats de l’évaluation</h2><p>Indicateurs calculés sur {{ metrics.n }} question(s).</p></div>
-    <a href="{% url 'export' %}" role="button" class="secondary outline button-small">Exporter en CSV</a>
+    <div><h2>Résultats</h2><p>Indicateurs calculés sur {{ metrics.n }} question(s).</p></div>
+    <a href="{% url 'export' %}" role="button" class="secondary outline button-small">Télécharger le CSV</a>
   </div>
-  <div class="grid">
-    <article class="metric"><p class="metric-label">Hit@1 · Bon résultat en première position</p><h3 class="metric-value">{% widthratio metrics.hit1 1 100 %}<small>%</small></h3></article>
-    <article class="metric"><p class="metric-label">Hit@3 · Bon résultat dans les trois premiers</p><h3 class="metric-value">{% widthratio metrics.hit3 1 100 %}<small>%</small></h3></article>
-    <article class="metric"><p class="metric-label">MRR · Rang réciproque moyen</p><h3 class="metric-value">{{ metrics.mrr|floatformat:3 }}</h3></article>
+  <div class="grid metric-grid">
+    <article class="metric metric-card">
+      <p class="metric-label">Hit@1 <span class="metric-value">{% widthratio metrics.hit1 1 100 %}<small>%</small></span></p>
+      <p class="metric-help">Le document attendu est le premier résultat pour cette part des questions.</p>
+    </article>
+    <article class="metric metric-card">
+      <p class="metric-label">Hit@3 <span class="metric-value">{% widthratio metrics.hit3 1 100 %}<small>%</small></span></p>
+      <p class="metric-help">Le document attendu apparaît dans les trois premiers pour cette part des questions.</p>
+    </article>
+    <article class="metric metric-card">
+      <p class="metric-label">Rang moyen réciproque <span class="metric-value">{{ metrics.mrr|floatformat:3 }}</span></p>
+      <p class="metric-help">Plus ce score est proche de 1, plus les bons documents remontent tôt.</p>
+    </article>
   </div>
 
   <section class="card panel section-gap">
-    <div class="panel-title"><div><h2>Analyse des erreurs</h2><p>{{ errors|length }} question(s) où le document attendu n’est pas en première position.</p></div></div>
+    <div class="panel-title">
+      <div><h2>Analyse des classements</h2><p>{{ errors|length }} question(s) où le document attendu n’arrive pas en première position.</p></div>
+      {% if errors %}<span class="status status-error">{{ errors|length }} à examiner</span>{% else %}<span class="status status-ok">Tout est bien classé</span>{% endif %}
+    </div>
     {% for r in errors %}
     <article class="result-card">
-      <header><strong>{{ r.question }}</strong><span class="status status-error">{{ r.diag }}</span></header>
-      <p>Rang du document attendu : <strong>{{ r.rank }}</strong> · Score attendu : {{ r.s_exp }} · Score du premier résultat : {{ r.s_top }}</p>
-      <div class="grid">
-        <div><strong>Document attendu · {{ r.expected.title }}</strong><p>{{ r.expected.text|truncatechars:350 }}</p></div>
-        <div><strong>Premier résultat · {{ r.top1.title }}</strong><p>{{ r.top1.text|truncatechars:350 }}</p></div>
+      <header>
+        <strong>{{ r.question }}</strong>
+        <span class="status status-error">{{ r.diag }}</span>
+      </header>
+      <p>Le document attendu est classé <strong>{{ r.rank }}{% if r.rank == 1 %}er{% else %}e{% endif %}</strong>. Score attendu : {{ r.s_exp }} · Score du premier résultat : {{ r.s_top }}</p>
+      <div class="grid comparison-grid">
+        <div class="comparison-card"><strong>Document attendu · {{ r.expected.title }}</strong><p>{{ r.expected.text|truncatechars:350 }}</p></div>
+        <div class="comparison-card"><strong>Classé premier · {{ r.top1.title }}</strong><p>{{ r.top1.text|truncatechars:350 }}</p></div>
       </div>
     </article>
     {% empty %}
-    <div class="empty-state"><span class="empty-icon" aria-hidden="true">✓</span><h3>Aucune erreur de classement</h3><p>Les documents attendus arrivent tous en première position. Vous pouvez enrichir le jeu de test pour confirmer ces résultats.</p></div>
+    <div class="empty-state"><span class="empty-icon" aria-hidden="true">✓</span><h3>Les documents attendus arrivent en tête</h3><p>Ajoutez d’autres questions pour vérifier la qualité du moteur sur davantage de cas.</p></div>
     {% endfor %}
   </section>
 </section>

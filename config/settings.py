@@ -26,7 +26,13 @@ SECRET_KEY = 'django-insecure-b*&$tv&u$5@$w!7yd=7$iiheu5vyxkd*v*$mu)ap)qh&h1(&rq
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    "recherche-sementique.vercel.app",
+    ".vercel.app",
+    "localhost",
+    "127.0.0.1",
+    "*.vercel.app",
+]
 CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']   # nécessaire pour les formulaires POST en HTTPS
 DEBUG = os.environ.get('DEBUG', '0') == '1'       # désactive la page de debug en production
 

@@ -23,36 +23,79 @@
 
 <section class="card panel section-gap">
   <div class="panel-title">
-    <div><h2>Documents du corpus</h2><p>Consultez les contenus importés et leur état d’indexation.</p></div>
+    <div><h2>Documents du corpus</h2><p>Cochez un ou plusieurs documents pour les supprimer en une seule fois.</p></div>
+    {% if docs %}<span class="status status-neutral">{{ docs|length }} document(s)</span>{% endif %}
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>#</th><th>Titre</th><th>Extrait</th><th>État</th><th><span class="sr-only">Actions</span></th></tr></thead>
-      <tbody>
-        {% for d in docs %}
-        <tr>
-          <td>{{ d.id }}</td>
-          <td><strong>{{ d.title }}</strong></td>
-          <td>{{ d.text|truncatechars:120 }}</td>
-          <td>{% if d.embedding %}<span class="status status-ok">Indexé</span>{% else %}<span class="status status-neutral">À indexer</span>{% endif %}</td>
-          <td>
-            <form method="post" action="{% url 'delete_document' d.id %}" onsubmit="return confirm('Supprimer ce document du corpus ?');">
-              {% csrf_token %}
-              <button type="submit" class="secondary outline button-small" aria-label="Supprimer {{ d.title }}">Supprimer</button>
-            </form>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5">
-          <div class="empty-state">
-            <span class="empty-icon" aria-hidden="true">＋</span>
-            <h3>Votre corpus est vide</h3>
-            <p>Importez vos premiers fichiers pour commencer.</p>
-          </div>
-        </td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% if docs %}
+  <form method="post" id="document-selection" onsubmit="return confirmSelectedDocuments();">
+    {% csrf_token %}
+    <input type="hidden" name="delete_selected" value="1">
+    <div class="selection-toolbar">
+      <label for="select-all-documents"><input type="checkbox" id="select-all-documents"> Tout sélectionner</label>
+      <span id="selection-count" class="muted" aria-live="polite">Aucun document sélectionné</span>
+    </div>
+    <div class="table-wrap">
+      <table class="selectable-table">
+        <thead>
+          <tr>
+            <th><span class="sr-only">Sélection</span></th>
+            <th>#</th><th>Titre</th><th>Extrait</th><th>État</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in docs %}
+          <tr>
+            <td><input type="checkbox" name="selected_documents" value="{{ d.id }}" aria-label="Sélectionner {{ d.title }}"></td>
+            <td>{{ d.id }}</td>
+            <td><strong>{{ d.title }}</strong></td>
+            <td>{{ d.text|truncatechars:120 }}</td>
+            <td>{% if d.embedding %}<span class="status status-ok">Indexé</span>{% else %}<span class="status status-neutral">À indexer</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="selection-actions">
+      <span class="selection-help">La suppression retire aussi les questions liées aux documents choisis.</span>
+      <button type="submit" name="delete_selected" value="1" class="danger-action button-small" disabled>Supprimer la sélection</button>
+    </div>
+  </form>
+  <script>
+    const selectionForm = document.getElementById("document-selection");
+    const selectAll = document.getElementById("select-all-documents");
+    const documentChecks = Array.from(selectionForm.querySelectorAll('input[name="selected_documents"]'));
+    const selectionCount = document.getElementById("selection-count");
+
+    function updateSelection() {
+      const selectedCount = documentChecks.filter((checkbox) => checkbox.checked).length;
+      selectionCount.textContent = selectedCount
+        ? `${selectedCount} document(s) sélectionné(s)`
+        : "Aucun document sélectionné";
+      selectionForm.querySelector('button[type="submit"]').disabled = selectedCount === 0;
+      selectAll.checked = selectedCount === documentChecks.length;
+      selectAll.indeterminate = selectedCount > 0 && selectedCount < documentChecks.length;
+    }
+
+    selectAll.addEventListener("change", () => {
+      documentChecks.forEach((checkbox) => { checkbox.checked = selectAll.checked; });
+      updateSelection();
+    });
+    documentChecks.forEach((checkbox) => checkbox.addEventListener("change", updateSelection));
+    updateSelection();
+
+    function confirmSelectedDocuments() {
+      const selectedCount = documentChecks.filter((checkbox) => checkbox.checked).length;
+      return selectedCount > 0 && confirm(
+        `Supprimer ${selectedCount} document(s) sélectionné(s) ? Les questions de test associées seront aussi supprimées.`
+      );
+    }
+  </script>
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon" aria-hidden="true">＋</span>
+    <h3>Votre corpus est vide</h3>
+    <p>Importez vos premiers fichiers pour commencer.</p>
   </div>
+  {% endif %}
 </section>
 {% endblock %}

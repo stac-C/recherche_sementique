@@ -3,52 +3,64 @@
 {% block content %}
 <section class="page-heading">
   <div class="eyebrow"><span class="eyebrow-dot"></span> Étape 3 · Exploration</div>
-  <h1>Recherchez par le sens</h1>
-  <p>Décrivez ce que vous cherchez en langage naturel. Le moteur identifie les passages les plus pertinents.</p>
+  <h1>Trouvez un document par son sens</h1>
+  <p>Posez une question ou décrivez une idée. Les documents les plus proches apparaîtront en premier.</p>
 </section>
 
-<section class="card panel">
-  <form method="get" role="search">
-    <label for="search-query">Votre recherche</label>
-    <div class="grid">
-      <input id="search-query" type="search" name="q" value="{{ q }}" placeholder="Ex. Quels documents parlent de la protection des données ?" autofocus>
-      <div>
-        <label for="result-count">Nombre de résultats</label>
-        <select id="result-count" name="k">
-          <option value="3" {% if k == 3 %}selected{% endif %}>3 résultats</option>
-          <option value="5" {% if k == 5 %}selected{% endif %}>5 résultats</option>
-          <option value="10" {% if k == 10 %}selected{% endif %}>10 résultats</option>
-        </select>
-      </div>
+<section class="search-panel">
+  <form method="get" role="search" aria-label="Recherche sémantique" class="semantic-search-form">
+    <div class="search-query-field">
+      <label for="search-query">Que recherchez-vous ?</label>
+      <input id="search-query" type="search" name="q" value="{{ q }}" placeholder="Ex. Quels documents parlent de la protection des données ?" required>
     </div>
-    <button type="submit">Lancer la recherche</button>
+    <div class="search-count-field">
+      <label for="result-count">Résultats à afficher</label>
+      <select id="result-count" name="k">
+        <option value="3" {% if k == 3 %}selected{% endif %}>3 documents</option>
+        <option value="5" {% if k == 5 %}selected{% endif %}>5 documents</option>
+        <option value="10" {% if k == 10 %}selected{% endif %}>10 documents</option>
+      </select>
+    </div>
+    <button class="search-submit" type="submit">Rechercher</button>
+    {% if q %}<a class="search-clear" href="{% url 'search' %}">Effacer la recherche</a>{% endif %}
+    <p class="search-hint">Une question complète fonctionne aussi bien que quelques mots-clés.</p>
   </form>
 </section>
 
 {% if error %}
-<p class="alert error section-gap" role="alert">{{ error }}</p>
+<section class="search-feedback section-gap" role="alert">
+  <div><span class="status status-error">Recherche indisponible</span><p>{{ error }}</p></div>
+  {% if not indexed %}
+  {% if not total %}<a href="{% url 'documents' %}" role="button" class="secondary outline button-small">Ajouter des documents</a>
+  {% else %}<a href="{% url 'build' %}" role="button" class="secondary outline button-small">Préparer l’index</a>{% endif %}
+  {% endif %}
+</section>
 {% elif q %}
-<section class="section-gap">
+<section class="search-results section-gap" aria-label="Résultats de recherche">
   <div class="panel-title">
-    <div><h2>Résultats</h2><p>Meilleures correspondances pour « {{ q }} »</p></div>
-    <span class="status status-neutral">{{ results|length }} résultat(s)</span>
+    <div><h2>Documents correspondants</h2><p>Classement pour « {{ q }} »</p></div>
+    <span class="status status-neutral">{{ results|length }} document(s)</span>
   </div>
   {% for doc, score in results %}
-  <article class="result-card">
-    <header>
-      <strong><span class="step-number">{{ forloop.counter }}</span> {{ doc.title }}</strong>
-      <span>Similarité <span class="score">{{ score|floatformat:3 }}</span></span>
+  <article class="result-card search-result">
+    <header class="search-result-header">
+      <div class="search-result-title"><span class="result-rank">{{ forloop.counter|stringformat:"02d" }}</span><h3>{{ doc.title }}</h3></div>
+      <span class="score-chip"><span>Score cosinus</span><strong>{{ score|floatformat:3 }}</strong></span>
     </header>
-    <progress value="{{ score|floatformat:3 }}" max="1" aria-label="Similarité {{ score|floatformat:3 }}"></progress>
-    <p>{{ doc.text|truncatechars:500 }}</p>
+    <p>{{ doc.text|truncatechars:600 }}</p>
   </article>
+  {% empty %}
+  <div class="empty-state search-no-results"><span class="empty-icon" aria-hidden="true">⌕</span><h3>Aucun document correspondant</h3><p>Essayez de reformuler votre recherche avec d’autres mots.</p></div>
   {% endfor %}
 </section>
 {% else %}
-<section class="card empty-state section-gap">
-  <span class="empty-icon" aria-hidden="true">⌕</span>
-  <h3>Prêt à explorer votre corpus ?</h3>
-  <p>Saisissez une question ci-dessus pour découvrir les documents les plus proches de votre besoin.</p>
+<section class="search-empty section-gap">
+  <div class="search-empty-copy"><span class="search-empty-mark" aria-hidden="true">01</span><div><h2>Commencez par une question</h2><p>Le moteur compare votre demande au contenu des documents, même si les mots ne sont pas identiques.</p></div></div>
+  <div class="search-ready">
+    <span class="status {% if indexed %}status-ok{% else %}status-neutral{% endif %}">{{ indexed }} document(s) indexé(s)</span>
+    {% if not total %}<a href="{% url 'documents' %}">Ajouter des documents</a>
+    {% elif indexed < total %}<a href="{% url 'build' %}">Préparer l’index</a>{% endif %}
+  </div>
 </section>
 {% endif %}
 {% endblock %}
