@@ -10,32 +10,49 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-import os
-import dj_database_url
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b*&$tv&u$5@$w!7yd=7$iiheu5vyxkd*v*$mu)ap)qh&h1(&rq'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-b*&$tv&u$5@$w!7yd=7$iiheu5vyxkd*v*$mu)ap)qh&h1(&rq',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = os.environ.get('DEBUG', '').lower() in {'1', 'true', 'yes'}
+VERCEL = os.environ.get('VERCEL', '').lower() in {'1', 'true', 'yes'}
 
 ALLOWED_HOSTS = [
-    "recherche-sementique.vercel.app",
-    ".vercel.app",
-    "localhost",
-    "127.0.0.1",
-    "*.vercel.app",
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '.vercel.app',
+    '*.vercel.app',
+    'recherche-sementique.vercel.app',
 ]
-CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']   # nécessaire pour les formulaires POST en HTTPS
-DEBUG = os.environ.get('DEBUG', '0') == '1'       # désactive la page de debug en production
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://*.vercel.app',
+    'https://recherche-sementique.vercel.app',
+]
+
+if VERCEL:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    USE_X_FORWARDED_HOST = True
 
 OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost:11434').rstrip('/')
 # OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '1d84c8b2dc0f441492b3231881f4755b.VikkasLHSRET7a_Otve7UnSp')
@@ -59,6 +76,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -149,8 +167,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
