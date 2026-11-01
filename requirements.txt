@@ -3,3 +3,4 @@ dj-database-url
 whitenoise
 numpy
 requests
+psycopg2-binary
