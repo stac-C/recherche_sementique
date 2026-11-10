@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import secrets
 from pathlib import Path
 
 import dj_database_url
@@ -21,15 +22,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-b*&$tv&u$5@$w!7yd=7$iiheu5vyxkd*v*$mu)ap)qh&h1(&rq',
-)
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '').lower() in {'1', 'true', 'yes'}
 VERCEL = os.environ.get('VERCEL', '').lower() in {'1', 'true', 'yes'}
+
+# SECURITY WARNING: set SECRET_KEY in production.
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if VERCEL:
+        raise RuntimeError('SECRET_KEY must be configured in production.')
+    SECRET_KEY = secrets.token_urlsafe(50)
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -55,7 +57,6 @@ if VERCEL:
     USE_X_FORWARDED_HOST = True
 
 OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost:11434').rstrip('/')
-# OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '1d84c8b2dc0f441492b3231881f4755b.VikkasLHSRET7a_Otve7UnSp')
 OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '')
 # https://ollama.com/api
 OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '300'))

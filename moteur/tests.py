@@ -35,6 +35,7 @@ class RemoteOllamaTest(TestCase):
     @patch("moteur.services.requests.post")
     def test_embed_falls_back_to_legacy_endpoint_on_404(self, post):
         unsupported_endpoint = Mock(status_code=404)
+        unsupported_endpoint.json.return_value = {"error": "endpoint not found"}
         legacy_response = Mock()
         legacy_response.json.return_value = {"embedding": [3.0, 4.0]}
         post.side_effect = [unsupported_endpoint, legacy_response]
