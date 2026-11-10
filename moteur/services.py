@@ -12,7 +12,7 @@ def _ollama_headers():
         return {"Authorization": f"Bearer {settings.OLLAMA_API_KEY}"}
     return {}
 
-
+#qd
 # def embed(texts):
 #     """Appelle l'API Ollama et renvoie une matrice (n, d) L2-normalisée."""
 #     out = []
