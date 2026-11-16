@@ -31,7 +31,7 @@ class RemoteOllamaTest(TestCase):
             timeout=45,
         )
         np.testing.assert_allclose(result, [[0.6, 0.8]])
-
+#s
     @patch("moteur.services.requests.post")
     def test_embed_falls_back_to_legacy_endpoint_on_404(self, post):
         unsupported_endpoint = Mock(status_code=404)
