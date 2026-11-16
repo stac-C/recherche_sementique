@@ -118,9 +118,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": dj_database_url.config(
         default="sqlite:///db.sqlite3",
-        conn_max_age=600,
+        conn_max_age=0 if VERCEL else 600,
+        ssl_require=VERCEL,
     )
 }
+
+if VERCEL and DATABASES['default']['ENGINE'] != 'django.db.backends.postgresql':
+    raise RuntimeError(
+        'DATABASE_URL must point to a persistent PostgreSQL database on Vercel.'
+    )
+
+if VERCEL and DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 
 # DATABASES = {

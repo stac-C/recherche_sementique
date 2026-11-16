@@ -35,3 +35,33 @@ Paramètres optionnels : `OLLAMA_TIMEOUT` (délai des embeddings en secondes, 30
 L’application utilise d’abord l’API d’embedding actuelle d’Ollama (`/api/embed`). Si le serveur renvoie une erreur 404 sur cette route, elle réessaie avec l’ancienne API (`/api/embeddings`) pour rester compatible avec les versions plus anciennes d’Ollama.
 
 Tests sans Ollama (embeddings factices) : `python manage.py test`
+
+## Déploiement sur Vercel
+
+Le projet utilise la détection Django native de Vercel. Importez le dépôt dans
+Vercel en gardant la racine du dépôt comme **Root Directory** ; ne définissez
+pas de commande de build personnalisée. Vercel détecte `manage.py`, installe
+les dépendances de `requirements.txt` et collecte les fichiers statiques.
+
+Avant le premier déploiement, configurez ces variables dans **Project Settings
+→ Environment Variables** pour chaque environnement utilisé (Production,
+Preview et, si nécessaire, Development) :
+
+- `SECRET_KEY` : une clé Django secrète et aléatoire.
+- `DATABASE_URL` : URL d’une base PostgreSQL persistante, par exemple celle
+  fournie par Neon ou Supabase. SQLite n’est pas persistant dans les fonctions
+  Vercel ; l’application refuse donc de démarrer sur Vercel sans cette variable.
+- `OLLAMA_URL` : URL HTTPS joignable depuis Internet vers un serveur Ollama
+  distant. Ollama ne peut pas tourner sur `localhost` dans une fonction Vercel.
+- `OLLAMA_API_KEY` : uniquement si le serveur Ollama ou son proxy exige un jeton.
+
+`VERCEL` est défini automatiquement par la plateforme. Après avoir configuré
+`DATABASE_URL`, appliquez les migrations à la base PostgreSQL une fois depuis
+un environnement où cette URL est disponible :
+
+    python manage.py migrate
+
+Les fichiers statiques sont collectés par Vercel ; aucune commande
+`collectstatic` personnalisée n’est nécessaire. Les fonctions serverless ne
+conviennent pas aux traitements d’indexation très longs : vérifiez la durée
+maximale de fonction de votre offre Vercel et les délais du serveur Ollama.
