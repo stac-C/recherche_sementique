@@ -55,7 +55,7 @@ if VERCEL:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     USE_X_FORWARDED_HOST = True
-
+#s
 OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost:11434').rstrip('/')
 OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '')
 # https://ollama.com/api
